@@ -10,20 +10,20 @@
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.2",
-    "next": "15.3.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "next": "14.2.3",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.2",
+    "@types/react": "18.3.1",
+    "@types/react-dom": "18.3.1",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "14.2.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "5.4.5"
   }
 }

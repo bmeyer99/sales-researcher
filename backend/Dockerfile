@@ -8,8 +8,6 @@ WORKDIR /app
 # Example: libpq-dev for psycopg2, build-essential for some wheels
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    # libpq-dev \ # Example: if using PostgreSQL
-    # libjpeg-dev zlib1g-dev \ # Example: if using Pillow
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file and install dependencies
@@ -27,8 +25,7 @@ ENV PYTHONUNBUFFERED 1
 
 # Install only runtime system dependencies (if any, e.g., libpq for psycopg2)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # libpq5 \ # Example: if using PostgreSQL
-    # libjpeg62-turbo \ # Example: if using Pillow
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user for security

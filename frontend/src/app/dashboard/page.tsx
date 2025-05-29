@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import GoogleDriveFolderInput from "@/components/GoogleDriveFolderInput";
 import ResearchProgress from "@/components/ResearchProgress";

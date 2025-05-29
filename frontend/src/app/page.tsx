@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from 'react';
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useAuthStore } from "../store/authStore";

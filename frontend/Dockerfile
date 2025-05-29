@@ -16,7 +16,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 # Copy only build-essential files and directories
-COPY package.json package-lock.json* next.config.ts tsconfig.json postcss.config.mjs eslint.config.mjs ./
+COPY package.json package-lock.json* next.config.mjs tsconfig.json postcss.config.mjs eslint.config.mjs ./
 COPY public ./public
 COPY src ./src
 
