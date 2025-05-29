@@ -21,12 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`antialiased`}>
         <GoogleOAuthProvider
-          clientId={(() => {
-            if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-              throw new Error('NEXT_PUBLIC_GOOGLE_CLIENT_ID is not defined');
-            }
-            return process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-          })()}
+          clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}
         >
           {children}
         </GoogleOAuthProvider>

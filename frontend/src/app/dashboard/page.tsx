@@ -25,17 +25,9 @@ export default function DashboardPage() {
     setError('');
 
     const { token } = useAuthStore.getState();
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-    if (!apiBaseUrl) {
-      setError('NEXT_PUBLIC_API_BASE_URL is not defined.');
-      setIsResearching(false);
-      return;
-    }
-
     try {
       const response = await fetch(
-        `${apiBaseUrl}/research/start`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/research/start`,
         {
           method: 'POST',
           headers: {
