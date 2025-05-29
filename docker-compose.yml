@@ -75,7 +75,7 @@ services:
       - researcher
     depends_on:
       - redis
-    command: celery -A backend.celery_app worker --loglevel=info
+    command: celery -A celery_app worker --loglevel=info
 
   redis:
     image: redis:alpine
