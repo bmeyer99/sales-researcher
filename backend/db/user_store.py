@@ -1,13 +1,22 @@
 from typing import Optional
 from datetime import datetime, timedelta
 
+
 class User:
-    def __init__(self, user_id: str, access_token: str, refresh_token: Optional[str] = None, client_id: Optional[str] = None, client_secret: Optional[str] = None):
+    def __init__(
+        self,
+        user_id: str,
+        access_token: str,
+        refresh_token: Optional[str] = None,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+    ):
         self.user_id = user_id
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.client_id = client_id
         self.client_secret = client_secret
+
 
 def get_user_credentials(user_id: str) -> Optional[User]:
     """
@@ -18,6 +27,7 @@ def get_user_credentials(user_id: str) -> Optional[User]:
     # the user's stored credentials from your database based on user_id.
     # For testing purposes, you might return a dummy User object or None.
     return None
+
 
 def get_user_by_id(user_id: str) -> Optional[User]:
     """
@@ -32,9 +42,10 @@ def get_user_by_id(user_id: str) -> Optional[User]:
             access_token="dummy_access_token",
             refresh_token="dummy_refresh_token",
             client_id="dummy_client_id",
-            client_secret="dummy_client_secret"
+            client_secret="dummy_client_secret",
         )
     return None
+
 
 def create_or_update_user(user_id: str, user_data: dict):
     """
@@ -44,6 +55,7 @@ def create_or_update_user(user_id: str, user_data: dict):
     # In a real application, this would save user_data to a database.
     # For demonstration, we'll just print it.
     print(f"User {user_id} data created/updated: {user_data}")
+
 
 def get_user(user_id: str) -> Optional[dict]:
     """
@@ -63,9 +75,10 @@ def get_user(user_id: str) -> Optional[dict]:
             "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
             "client_id": "dummy_client_id",
             "client_secret": "dummy_client_secret",
-            "token_uri": "https://oauth2.googleapis.com/token"
+            "token_uri": "https://oauth2.googleapis.com/token",
         }
     return None
+
 
 def delete_user(user_id: str):
     """

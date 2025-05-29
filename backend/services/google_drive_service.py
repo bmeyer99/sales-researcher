@@ -3,13 +3,19 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging
 from typing import Optional, Any
-from backend.db.user_store import get_user_credentials, User
+from backend.db.user_store import get_user_credentials
 from googleapiclient.http import MediaInMemoryUpload
 import io
 
 logger = logging.getLogger(__name__)
 
-def build_drive_service(access_token: str, refresh_token: Optional[str] = None, client_id: Optional[str] = None, client_secret: Optional[str] = None) -> Any:
+
+def build_drive_service(
+    access_token: str,
+    refresh_token: Optional[str] = None,
+    client_id: Optional[str] = None,
+    client_secret: Optional[str] = None,
+) -> Any:
     """
     Builds and returns an initialized Google Drive API service client.
 
@@ -36,17 +42,16 @@ def build_drive_service(access_token: str, refresh_token: Optional[str] = None, 
             refresh_token=refresh_token,
             client_id=client_id,
             client_secret=client_secret,
-            token_uri="https://oauth2.googleapis.com/token" # Standard Google token URI
+            token_uri="https://oauth2.googleapis.com/token",  # Standard Google token URI
         )
-        
+
         # If refresh_token is provided, ensure credentials can refresh
         if refresh_token and client_id and client_secret:
             # This will attempt to refresh the token if it's expired
             # and a refresh token is available.
             credentials.refresh(None)
-        
+
         # Use aiohttp for async HTTP requests with googleapiclient
-        from googleapiclient.http import build_http
         # The googleapiclient library does not natively support async operations
         # with aiohttp in the way you're trying to use it.
         # For asynchronous Google Drive operations, you would typically use
@@ -65,11 +70,10 @@ def build_drive_service(access_token: str, refresh_token: Optional[str] = None, 
     except Exception as e:
         logger.error(f"An unexpected error occurred while building Drive service: {e}")
         raise
- 
+
+
 def find_or_create_folder(
-    user_id: str,
-    folder_name: str,
-    parent_folder_id: Optional[str] = None
+    user_id: str, folder_name: str, parent_folder_id: Optional[str] = None
 ) -> str:
     """
     Searches for a Google Drive folder by name and creates it if it doesn't exist.
@@ -96,7 +100,7 @@ def find_or_create_folder(
             access_token=user_credentials.access_token,
             refresh_token=user_credentials.refresh_token,
             client_id=user_credentials.client_id,
-            client_secret=user_credentials.client_secret
+            client_secret=user_credentials.client_secret,
         )
 
         # Build the query
@@ -110,30 +114,31 @@ def find_or_create_folder(
             pass
 
         # Search for existing folder
-        results = drive_service.files().list(
-            q=query,
-            fields="files(id, name)",
-            spaces="drive"
-        ).execute()
-        
+        results = (
+            drive_service.files()
+            .list(q=query, fields="files(id, name)", spaces="drive")
+            .execute()
+        )
+
         items = results.get("files", [])
 
         if items:
-            logger.info(f"Found existing folder '{folder_name}' with ID: {items[0]['id']}")
+            logger.info(
+                f"Found existing folder '{folder_name}' with ID: {items[0]['id']}"
+            )
             return items[0]["id"]
         else:
             # Create new folder
             file_metadata = {
                 "name": folder_name,
-                "mimeType": "application/vnd.google-apps.folder"
+                "mimeType": "application/vnd.google-apps.folder",
             }
             if parent_folder_id:
-                file_metadata["parents"] = [parent_folder_id] # type: ignore
+                file_metadata["parents"] = [parent_folder_id]  # type: ignore
 
-            folder = drive_service.files().create(
-                body=file_metadata,
-                fields="id"
-            ).execute()
+            folder = (
+                drive_service.files().create(body=file_metadata, fields="id").execute()
+            )
             logger.info(f"Created new folder '{folder_name}' with ID: {folder['id']}")
             return folder.get("id")
 
@@ -147,12 +152,13 @@ def find_or_create_folder(
         logger.error(f"An unexpected error occurred in find_or_create_folder: {e}")
         raise
 
+
 def upload_text_file(
     file_name: str,
     file_content: str,
     folder_id: str,
-    mime_type: str = 'text/markdown',
-    user_id: Optional[str] = None
+    mime_type: str = "text/markdown",
+    user_id: Optional[str] = None,
 ) -> dict:
     """
     Uploads text content as a file to a specified Google Drive folder.
@@ -184,29 +190,28 @@ def upload_text_file(
             access_token=user_credentials.access_token,
             refresh_token=user_credentials.refresh_token,
             client_id=user_credentials.client_id,
-            client_secret=user_credentials.client_secret
+            client_secret=user_credentials.client_secret,
         )
 
-        file_metadata = {
-            'name': file_name,
-            'parents': [folder_id]
-        }
+        file_metadata = {"name": file_name, "parents": [folder_id]}
 
-        content_bytes = file_content.encode('utf-8')
+        content_bytes = file_content.encode("utf-8")
         fh = io.BytesIO(content_bytes)
-        media_body = MediaInMemoryUpload(
-            fh,
-            mimetype=mime_type,
-            resumable=True
+        media_body = MediaInMemoryUpload(fh, mimetype=mime_type, resumable=True)
+
+        file = (
+            drive_service.files()
+            .create(
+                body=file_metadata,
+                media_body=media_body,
+                fields="id, name, webViewLink",
+            )
+            .execute()
         )
 
-        file = drive_service.files().create(
-            body=file_metadata,
-            media_body=media_body,
-            fields='id, name, webViewLink'
-        ).execute()
-
-        logger.info(f"Uploaded file '{file_name}' with ID: {file.get('id')} to folder {folder_id}")
+        logger.info(
+            f"Uploaded file '{file_name}' with ID: {file.get('id')} to folder {folder_id}"
+        )
         return file
 
     except HttpError as error:
@@ -219,10 +224,13 @@ def upload_text_file(
         logger.error(f"An unexpected error occurred in upload_text_file: {e}")
         raise
 
+
 # Example usage (for testing purposes, not part of the service itself)
 if __name__ == "__main__":
     # This block is for local testing and demonstration.
     # In a real application, access_token, refresh_token, client_id, client_secret
     # would come from your authentication system and environment variables.
-    print("This is a utility module for Google Drive service. It's not meant to be run directly.")
+    print(
+        "This is a utility module for Google Drive service. It's not meant to be run directly."
+    )
     print("To test, you would import build_drive_service and pass valid credentials.")

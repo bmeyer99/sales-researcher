@@ -1,5 +1,9 @@
 import os
 import google.generativeai as genai
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class GeminiService:
     def __init__(self):
@@ -7,16 +11,19 @@ class GeminiService:
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable not set.")
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-pro-latest') # Using a general model, can be made configurable
+        self.model = genai.GenerativeModel(
+            "gemini-1.5-pro-latest"
+        )  # Using a general model, can be made configurable
 
     def generate_content(self, prompt: str):
         try:
             response = self.model.generate_content(prompt)
             return response.text
         except Exception as e:
-            # Implement more specific error handling based on genai exceptions
-            print(f"Error generating content from Gemini API: {e}")
-            return None
+            # TODO: Implement more specific error handling based on genai exceptions
+            logger.error(f"Error generating content from Gemini API: {e}")
+            raise # Re-raise the exception to be handled by the caller
+
 
 gemini_service = GeminiService()
 

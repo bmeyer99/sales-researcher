@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def fetch_and_extract_text(url: str) -> str | None:
     """
     Fetches a webpage from the given URL and extracts its main text content using trafilatura.
@@ -22,7 +23,9 @@ def fetch_and_extract_text(url: str) -> str | None:
             return None
 
         # Extract the main text content
-        extracted_text = trafilatura.extract(downloaded, include_comments=False, include_tables=False)
+        extracted_text = trafilatura.extract(
+            downloaded, include_comments=False, include_tables=False
+        )
 
         if extracted_text is None:
             logger.warning(f"Failed to extract significant text from URL: {url}")
@@ -31,4 +34,4 @@ def fetch_and_extract_text(url: str) -> str | None:
         return extracted_text
     except Exception as e:
         logger.error(f"An error occurred during content extraction for URL {url}: {e}")
-        return None
+        raise # Re-raise the exception to be handled by the caller

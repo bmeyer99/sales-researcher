@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import logging
 from backend.core.config import settings
 from backend.db.user_store import create_or_update_user, get_user, delete_user
 import secrets
@@ -12,6 +13,7 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from datetime import datetime, timedelta
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # This is a placeholder for session management. In a real application, you'd configure
@@ -19,10 +21,11 @@ router = APIRouter()
 # server-side session store (e.g., Redis) for production.
 # For now, we'll assume session is available via request.session.
 
+
 @router.get(
     "/google/login",
     summary="Initiate Google OAuth2 Login",
-    description="Redirects the user to Google's consent screen to initiate the OAuth2 authentication flow. A PKCE code verifier and state are generated and stored in the session for security."
+    description="Redirects the user to Google's consent screen to initiate the OAuth2 authentication flow. A PKCE code verifier and state are generated and stored in the session for security.",
 )
 async def google_login(request: Request):
     session = request.session
@@ -37,11 +40,11 @@ async def google_login(request: Request):
                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
                 "redirect_uris": [settings.GOOGLE_REDIRECT_URI],
-                "javascript_origins": [settings.FRONTEND_URL]
+                "javascript_origins": [settings.FRONTEND_URL],
             }
         },
-        scopes=settings.GOOGLE_SCOPES.split(), # Use the property from settings
-        redirect_uri=settings.GOOGLE_REDIRECT_URI
+        scopes=settings.GOOGLE_SCOPES.split(),  # Use the property from settings
+        redirect_uri=settings.GOOGLE_REDIRECT_URI,
     )
 
     # Generate PKCE code verifier and challenge
@@ -51,11 +54,11 @@ async def google_login(request: Request):
     )
 
     authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true',
-        prompt='consent',  # Ensure refresh token is issued
+        access_type="offline",
+        include_granted_scopes="true",
+        prompt="consent",  # Ensure refresh token is issued
         code_challenge=code_challenge,
-        code_challenge_method='S256'
+        code_challenge_method="S256",
     )
 
     # Store state and code_verifier in session for verification in callback
@@ -64,10 +67,11 @@ async def google_login(request: Request):
 
     return RedirectResponse(authorization_url)
 
+
 @router.get(
     "/google/callback",
     summary="Google OAuth2 Callback",
-    description="Handles the redirect from Google after successful user authentication. Exchanges the authorization code for access and refresh tokens, verifies the ID token, retrieves user information, and stores user data in the database. Redirects to the frontend dashboard upon success."
+    description="Handles the redirect from Google after successful user authentication. Exchanges the authorization code for access and refresh tokens, verifies the ID token, retrieves user information, and stores user data in the database. Redirects to the frontend dashboard upon success.",
 )
 async def google_callback(request: Request, code: str, state: str):
     session = request.session
@@ -76,7 +80,7 @@ async def google_callback(request: Request, code: str, state: str):
     if state != session.get("oauth_state"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="State mismatch. Possible CSRF attack."
+            detail="State mismatch. Possible CSRF attack.",
         )
 
     # Retrieve PKCE code verifier from session
@@ -84,7 +88,7 @@ async def google_callback(request: Request, code: str, state: str):
     if not pkce_code_verifier:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="PKCE code verifier not found in session."
+            detail="PKCE code verifier not found in session.",
         )
 
     flow = Flow.from_client_config(
@@ -97,11 +101,11 @@ async def google_callback(request: Request, code: str, state: str):
                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
                 "client_secret": settings.GOOGLE_CLIENT_SECRET,
                 "redirect_uris": [settings.GOOGLE_REDIRECT_URI],
-                "javascript_origins": [settings.FRONTEND_URL]
+                "javascript_origins": [settings.FRONTEND_URL],
             }
         },
-        scopes=settings.GOOGLE_SCOPES.split(), # Use the property from settings
-        redirect_uri=settings.GOOGLE_REDIRECT_URI
+        scopes=settings.GOOGLE_SCOPES.split(),  # Use the property from settings
+        redirect_uri=settings.GOOGLE_REDIRECT_URI,
     )
 
     try:
@@ -110,7 +114,7 @@ async def google_callback(request: Request, code: str, state: str):
 
         credentials = flow.credentials
         # id_token_jwt is available on credentials if 'openid' scope was requested
-        id_token_jwt = getattr(credentials, 'id_token', None)
+        id_token_jwt = getattr(credentials, "id_token", None)
 
         # Verify the ID token
         if id_token_jwt:
@@ -123,7 +127,7 @@ async def google_callback(request: Request, code: str, state: str):
             # For this task, we assume id_token is always present.
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="ID token not received. Ensure 'openid' scope is requested."
+                detail="ID token not received. Ensure 'openid' scope is requested.",
             )
 
         # Extract user information
@@ -135,7 +139,7 @@ async def google_callback(request: Request, code: str, state: str):
         if not user_id:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="User ID not found in ID token."
+                detail="User ID not found in ID token.",
             )
 
         # Store user info and tokens in the database
@@ -146,10 +150,12 @@ async def google_callback(request: Request, code: str, state: str):
             "picture": user_picture,
             "access_token": credentials.token,
             "refresh_token": credentials.refresh_token,
-            "expires_at": credentials.expiry.isoformat() if credentials.expiry else None,
+            "expires_at": credentials.expiry.isoformat()
+            if credentials.expiry
+            else None,
             "client_id": settings.GOOGLE_CLIENT_ID,
             "client_secret": settings.GOOGLE_CLIENT_SECRET,
-            "token_uri": "https://oauth2.googleapis.com/token"
+            "token_uri": "https://oauth2.googleapis.com/token",
         }
         create_or_update_user(user_id, user_data)
 
@@ -165,11 +171,12 @@ async def google_callback(request: Request, code: str, state: str):
 
     except Exception as e:
         # Handle errors during token exchange or ID token verification
-        print(f"OAuth callback error: {e}")
+        logger.error(f"OAuth callback error: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Authentication failed: {e}"
+            detail=f"Authentication failed: {e}",
         )
+
 
 def refresh_google_token(user_id: str):
     """
@@ -180,7 +187,7 @@ def refresh_google_token(user_id: str):
     if not user_data or not user_data.get("refresh_token"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No refresh token found for user. Re-authentication required."
+            detail="No refresh token found for user. Re-authentication required.",
         )
 
     credentials = Credentials(
@@ -189,7 +196,7 @@ def refresh_google_token(user_id: str):
         token_uri=user_data["token_uri"],
         client_id=user_data["client_id"],
         client_secret=user_data["client_secret"],
-        scopes=settings.GOOGLE_SCOPES.split()
+        scopes=settings.GOOGLE_SCOPES.split(),
     )
 
     try:
@@ -199,28 +206,33 @@ def refresh_google_token(user_id: str):
 
         # Update user data with new access token and expiry
         user_data["access_token"] = credentials.token
-        user_data["expires_at"] = credentials.expiry.isoformat() if credentials.expiry else None # Ensure expiry is not None
+        user_data["expires_at"] = (
+            credentials.expiry.isoformat() if credentials.expiry else None
+        )  # Ensure expiry is not None
         create_or_update_user(user_id, user_data)
         return credentials
     except Exception as e:
-        print(f"Token refresh failed for user {user_id}: {e}")
+        logger.error(f"Token refresh failed for user {user_id}: {e}", exc_info=True)
         # Invalidate refresh token and user session if refresh fails
         delete_user(user_id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Failed to refresh token. Please re-authenticate. Error: {e}"
+            detail=f"Failed to refresh token. Please re-authenticate. Error: {e}",
         )
+
 
 @router.get(
     "/status",
     summary="Check Authentication Status",
-    description="Checks the current authentication status of the user. If authenticated, it returns basic user information and ensures the access token is valid, refreshing it if necessary. Returns a 401 Unauthorized error if the user is not authenticated or the session is invalid."
+    description="Checks the current authentication status of the user. If authenticated, it returns basic user information and ensures the access token is valid, refreshing it if necessary. Returns a 401 Unauthorized error if the user is not authenticated or the session is invalid.",
 )
 async def auth_status(request: Request):
     session = request.session
     user_id = session.get("user_id")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
 
     # Ensure user_id is a string before passing to get_user
     user_id_str = str(user_id)
@@ -228,41 +240,51 @@ async def auth_status(request: Request):
     if not user_data:
         # User ID in session but not in DB, likely invalidated
         session.pop("user_id", None)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User session invalid. Please re-authenticate.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User session invalid. Please re-authenticate.",
+        )
 
     try:
         # Attempt to refresh token if needed, this will also update user_data in db
         credentials = refresh_google_token(user_id_str)
-        
+
         # Return user info from the updated user_data
         return {
             "id": user_data["user_id"],
             "email": user_data["email"],
             "name": user_data["name"],
             "picture": user_data["picture"],
-            "access_token": credentials.token, # Return the current access token
-            "expires_at": credentials.expiry.isoformat() if credentials.expiry else None # Ensure expiry is not None
+            "access_token": credentials.token,  # Return the current access token
+            "expires_at": credentials.expiry.isoformat()
+            if credentials.expiry
+            else None,  # Ensure expiry is not None
         }
     except HTTPException as e:
         # If refresh_google_token raises HTTPException, it means re-authentication is needed
-        session.pop("user_id", None) # Clear session user_id
+        session.pop("user_id", None)  # Clear session user_id
         raise e
     except Exception as e:
         # Catch any other unexpected errors during status check
         session.pop("user_id", None)
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {e}",
+        )
 
 
 @router.post(
     "/logout",
     summary="Logout User",
-    description="Logs out the current user by clearing their session and removing their authentication data from the database. This invalidates their access and refresh tokens."
+    description="Logs out the current user by clearing their session and removing their authentication data from the database. This invalidates their access and refresh tokens.",
 )
 async def logout(request: Request):
     session = request.session
     user_id = session.get("user_id")
     if user_id:
-        delete_user(str(user_id)) # Ensure user_id is a string before passing to delete_user
+        delete_user(
+            str(user_id)
+        )  # Ensure user_id is a string before passing to delete_user
     session.clear()
     return {"message": "Logged out successfully"}
 
@@ -300,7 +322,9 @@ async def get_current_user(request: Request):
                 # Attempt to refresh token
                 credentials = refresh_google_token(str(user_id))
                 user_data["access_token"] = credentials.token
-                user_data["expires_at"] = credentials.expiry.isoformat() if credentials.expiry else None
+                user_data["expires_at"] = (
+                    credentials.expiry.isoformat() if credentials.expiry else None
+                )
             except HTTPException as e:
                 # If refresh fails, re-raise the authentication error
                 raise e
@@ -317,7 +341,9 @@ async def get_current_user(request: Request):
         try:
             credentials = refresh_google_token(str(user_id))
             user_data["access_token"] = credentials.token
-            user_data["expires_at"] = credentials.expiry.isoformat() if credentials.expiry else None
+            user_data["expires_at"] = (
+                credentials.expiry.isoformat() if credentials.expiry else None
+            )
         except HTTPException as e:
             raise e
         except Exception as e:
@@ -333,5 +359,5 @@ async def get_current_user(request: Request):
         "email": user_data["email"],
         "name": user_data["name"],
         "picture": user_data["picture"],
-        "access_token": user_data["access_token"]
+        "access_token": user_data["access_token"],
     }

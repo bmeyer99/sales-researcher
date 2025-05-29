@@ -1,8 +1,10 @@
+from celery.utils.log import get_task_logger
 from backend.celery_app import celery_app
 from backend.services.gemini_service import gemini_service
 from backend.tasks.google_drive_tasks import save_text_to_gdrive_task
 import json
 import re
+
 
 @celery_app.task(bind=True, name="gemini_tasks.test_gemini_api")
 def test_gemini_api(self, prompt: str):
@@ -18,11 +20,14 @@ def test_gemini_api(self, prompt: str):
             print("Failed to get response from Gemini API.")
             return {"status": "failed", "message": "No response from Gemini API."}
     except Exception as e:
-        print(f"Error in test_gemini_api task: {e}")
+        logger.error(f"Error in test_gemini_api task: {e}", exc_info=True)
         return {"status": "error", "message": str(e)}
 
+
 @celery_app.task(bind=True, name="prospect_deep_dive_task")
-def prospect_deep_dive_task(self, company_name: str, drive_folder_id: str, user_id: str):
+def prospect_deep_dive_task(
+    self, company_name: str, drive_folder_id: str, user_id: str
+):
     """
     Celery task to perform a "Prospect Deep Dive" using the Gemini API.
     Gathers comprehensive company information and a prioritized list of source URLs.
@@ -60,7 +65,7 @@ def prospect_deep_dive_task(self, company_name: str, drive_folder_id: str, user_
                 "user_id": user_id,
                 "overview_text": "",
                 "source_urls": [],
-                "status_message": "failed: No response from Gemini API."
+                "status_message": "failed: No response from Gemini API.",
             }
 
         # 3. Parse Response
@@ -74,35 +79,44 @@ def prospect_deep_dive_task(self, company_name: str, drive_folder_id: str, user_
             overview_text = response_json.get("overview", "")
             source_urls = response_json.get("source_urls", [])
             if not isinstance(source_urls, list):
-                source_urls = [] # Ensure it's a list
+                source_urls = []  # Ensure it's a list
         except json.JSONDecodeError:
             # If not a perfect JSON, try to extract using regex or string manipulation
             status_message = "success_with_parsing_issues: Gemini response was not perfect JSON, extracted best effort."
-            
+
             # Attempt to extract overview text (everything before "source_urls": [)
-            overview_match = re.match(r'^(.*?)(?="source_urls": \[|$)', gemini_response_text, re.DOTALL)
+            overview_match = re.match(
+                r'^(.*?)(?="source_urls": \[|$)', gemini_response_text, re.DOTALL
+            )
             if overview_match:
                 overview_text = overview_match.group(1).strip()
                 # Clean up potential JSON remnants at the end of overview
                 if overview_text.endswith('",'):
                     overview_text = overview_text[:-2]
                 if overview_text.startswith('{"overview": "'):
-                    overview_text = overview_text[len('{"overview": "'):]
+                    overview_text = overview_text[len('{"overview": "') :]
 
             # Attempt to extract URLs using regex
-            urls_match = re.search(r'"source_urls": \[\s*([^\]]+?)\s*\]', gemini_response_text, re.DOTALL)
+            urls_match = re.search(
+                r'"source_urls": \[\s*([^\]]+?)\s*\]', gemini_response_text, re.DOTALL
+            )
             if urls_match:
                 urls_str = urls_match.group(1)
                 # Extract individual URLs, handling various quote types and commas
                 found_urls = re.findall(r'"(https?://[^"]+)"', urls_str)
                 source_urls = found_urls
-            
+
             # Fallback if no URLs found in JSON format, try to find any URLs
             if not source_urls:
                 source_urls = re.findall(r'https?://[^\s"\']+', gemini_response_text)
                 # Filter out common non-URL strings that might match the regex broadly
-                source_urls = [url for url in source_urls if not any(ext in url for ext in ['.png', '.jpg', '.gif', '.css', '.js'])]
-
+                source_urls = [
+                    url
+                    for url in source_urls
+                    if not any(
+                        ext in url for ext in [".png", ".jpg", ".gif", ".css", ".js"]
+                    )
+                ]
 
         # 4. Call save_text_to_gdrive_task
         if overview_text:
@@ -110,7 +124,7 @@ def prospect_deep_dive_task(self, company_name: str, drive_folder_id: str, user_
                 file_content=overview_text,
                 company_name=company_name,
                 drive_folder_id=drive_folder_id,
-                user_id=user_id
+                user_id=user_id,
             )
 
         # 5. Return Value
@@ -120,22 +134,26 @@ def prospect_deep_dive_task(self, company_name: str, drive_folder_id: str, user_
             "user_id": user_id,
             "overview_text": overview_text,
             "source_urls": source_urls,
-            "status_message": status_message
+            "status_message": status_message,
         }
 
     except Exception as e:
-        self.retry(exc=e, countdown=5, max_retries=3) # Example retry logic
+        logger.error(f"Error in prospect_deep_dive_task for {company_name}: {e}", exc_info=True)
+        self.retry(exc=e, countdown=5, max_retries=3)  # Example retry logic
         return {
             "company_name": company_name,
             "drive_folder_id": drive_folder_id,
             "user_id": user_id,
             "overview_text": "",
             "source_urls": [],
-            "status_message": f"error: {str(e)}"
+            "status_message": f"error: {str(e)}",
         }
 
+
 @celery_app.task(bind=True, name="prospect_competitor_analysis_task")
-def prospect_competitor_analysis_task(self, company_name: str, drive_folder_id: str, user_id: str):
+def prospect_competitor_analysis_task(
+    self, company_name: str, drive_folder_id: str, user_id: str
+):
     """
     Celery task to perform competitor analysis for the target prospect company using Gemini.
     """
@@ -167,7 +185,7 @@ def prospect_competitor_analysis_task(self, company_name: str, drive_folder_id: 
                 "drive_folder_id": drive_folder_id,
                 "user_id": user_id,
                 "analysis_report": "",
-                "status_message": "failed: No response from Gemini API."
+                "status_message": "failed: No response from Gemini API.",
             }
 
         # 3. Parse Response (Gemini's response is expected to be free-form text for this task)
@@ -180,7 +198,7 @@ def prospect_competitor_analysis_task(self, company_name: str, drive_folder_id: 
                 file_content=analysis_report,
                 file_name=file_name,
                 drive_folder_id=drive_folder_id,
-                user_id=user_id
+                user_id=user_id,
             )
 
         # 5. Return Value
@@ -189,21 +207,29 @@ def prospect_competitor_analysis_task(self, company_name: str, drive_folder_id: 
             "drive_folder_id": drive_folder_id,
             "user_id": user_id,
             "analysis_report": analysis_report,
-            "status_message": "success"
+            "status_message": "success",
         }
 
     except Exception as e:
-        self.retry(exc=e, countdown=5, max_retries=3) # Example retry logic
+        logger.error(f"Error in prospect_competitor_analysis_task for {company_name}: {e}", exc_info=True)
+        self.retry(exc=e, countdown=5, max_retries=3)  # Example retry logic
         return {
             "company_name": company_name,
             "drive_folder_id": drive_folder_id,
             "user_id": user_id,
             "analysis_report": "",
-            "status_message": f"error: {str(e)}"
+            "status_message": f"error: {str(e)}",
         }
 
+
 @celery_app.task(bind=True, name="own_competitor_marketing_analysis_task")
-def own_competitor_marketing_analysis_task(self, prospect_company_name: str, prospect_company_industry: str, drive_folder_id: str, user_id: str):
+def own_competitor_marketing_analysis_task(
+    self,
+    prospect_company_name: str,
+    prospect_company_industry: str,
+    drive_folder_id: str,
+    user_id: str,
+):
     """
     Celery task to analyze how Palo Alto Networks' competitors are targeting the prospect company's market segment.
     """
@@ -216,7 +242,7 @@ def own_competitor_marketing_analysis_task(self, prospect_company_name: str, pro
             "CrowdStrike",
             "Zscaler",
             "Microsoft (Azure Security)",
-            "Amazon Web Services (AWS Security)"
+            "Amazon Web Services (AWS Security)",
         ]
         competitors_list_str = ", ".join(palo_alto_competitors)
 
@@ -251,7 +277,7 @@ def own_competitor_marketing_analysis_task(self, prospect_company_name: str, pro
                 "drive_folder_id": drive_folder_id,
                 "user_id": user_id,
                 "analysis_report": "",
-                "status_message": "failed: No response from Gemini API."
+                "status_message": "failed: No response from Gemini API.",
             }
 
         # 3. Parse Response (Gemini's response is expected to be free-form text for this task)
@@ -264,7 +290,7 @@ def own_competitor_marketing_analysis_task(self, prospect_company_name: str, pro
                 file_content=analysis_report,
                 file_name=file_name,
                 drive_folder_id=drive_folder_id,
-                user_id=user_id
+                user_id=user_id,
             )
 
         # 5. Return Value
@@ -273,15 +299,16 @@ def own_competitor_marketing_analysis_task(self, prospect_company_name: str, pro
             "drive_folder_id": drive_folder_id,
             "user_id": user_id,
             "analysis_report": analysis_report,
-            "status_message": "success"
+            "status_message": "success",
         }
 
     except Exception as e:
-        self.retry(exc=e, countdown=5, max_retries=3) # Example retry logic
+        logger.error(f"Error in own_competitor_marketing_analysis_task for {prospect_company_name}: {e}", exc_info=True)
+        self.retry(exc=e, countdown=5, max_retries=3)  # Example retry logic
         return {
             "prospect_company_name": prospect_company_name,
             "drive_folder_id": drive_folder_id,
             "user_id": user_id,
             "analysis_report": "",
-            "status_message": f"error: {str(e)}"
+            "status_message": f"error: {str(e)}",
         }
