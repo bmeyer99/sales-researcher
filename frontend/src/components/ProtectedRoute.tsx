@@ -17,7 +17,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       if (typeof window !== 'undefined') {
         // Only run on client side
         await checkAuthStatus();
-        if (!isAuthenticated) {
+        // After checkAuthStatus completes, re-read the latest state
+        if (!useAuthStore.getState().isAuthenticated) {
           router.push('/login');
         }
       }

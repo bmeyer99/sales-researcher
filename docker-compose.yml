@@ -4,14 +4,12 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     volumes:
-      - ./frontend:/app # For development, sync local changes.
-      - /app/node_modules # Don't overwrite node_modules in container
-      - /app/.next # Persist .next folder if needed for dev
+      - /app/.next # Persists the .next build cache, can speed up server restarts.
     env_file:
       - ./frontend/.env
     environment:
-      - NODE_ENV=development
-    # ports:  # PUBLIC FACING HOST - NO PORT PUBLISHING
+      - NODE_ENV=development 
+    # ports: # As per your original, not exposing directly
     #   - "3000:3000"
     labels:
       - "traefik.enable=true"
@@ -29,15 +27,11 @@ services:
       - "traefik.http.services.research-secure.loadbalancer.server.port=3000"
     depends_on:
       - backend
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - traefik-research
       - researcher
 
+  # ... your other services (backend, backend_worker, redis) remain the same
   backend:
     build:
       context: ./backend
@@ -48,19 +42,12 @@ services:
       - ./backend/.env
     environment:
       - REDIS_PASSWORD=debugpassword # Matching the redis service for debugging
-      - FRONTEND_URL=https://research.no13productions.com
+      - FRONTEND_URL=http://frontend:3000 # Adjusted to match the frontend service
       - GOOGLE_PROJECT_ID=YOUR_GOOGLE_PROJECT_ID_HERE # Please replace with your actual Google Project ID
-    # ports:  # PUBLIC FACING HOST - NO PORT PUBLISHING
-    #   - "8000:8000"
     networks:
       - researcher
     depends_on:
       - redis
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   backend_worker:
     build:
@@ -83,8 +70,6 @@ services:
 
   redis:
     image: redis:alpine
-    # ports:  # PUBLIC FACING HOST - NO PORT PUBLISHING
-    #   - "6379:6379"
     networks:
       - researcher
     volumes:

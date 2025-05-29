@@ -1,25 +1,18 @@
 import React from 'react';
 
 interface GoogleDriveFolderInputProps {
-  folderName?: string; // Make optional
-  onFolderNameChange?: (name: string) => void; // Make optional
-  onFolderSelect?: (name: string) => void; // Add new prop
-  disabled?: boolean; // Add new prop
+  folderName?: string;
+  onFolderChange: (name: string) => void;
+  disabled?: boolean;
 }
 
 const GoogleDriveFolderInput: React.FC<GoogleDriveFolderInputProps> = ({
   folderName,
-  onFolderNameChange,
-  onFolderSelect,
+  onFolderChange,
   disabled,
 }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onFolderNameChange) {
-      onFolderNameChange(e.target.value);
-    }
-    if (onFolderSelect) {
-      onFolderSelect(e.target.value);
-    }
+    onFolderChange(e.target.value);
   };
 
   const displayFolderName = folderName !== undefined ? folderName : '';

@@ -5,6 +5,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import GoogleDriveFolderInput from '@/components/GoogleDriveFolderInput';
 import ResearchProgress from '@/components/ResearchProgress';
 import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [companyName, setCompanyName] = useState('');
@@ -12,6 +13,7 @@ export default function DashboardPage() {
   const [isResearching, setIsResearching] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleStartResearch = async () => {
     if (!companyName || !gdriveFolderName) {
@@ -23,10 +25,17 @@ export default function DashboardPage() {
     setError('');
 
     const { token } = useAuthStore.getState();
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+    if (!apiBaseUrl) {
+      setError('NEXT_PUBLIC_API_BASE_URL is not defined.');
+      setIsResearching(false);
+      return;
+    }
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/research/start`,
+        `${apiBaseUrl}/research/start`,
         {
           method: 'POST',
           headers: {
@@ -96,7 +105,7 @@ export default function DashboardPage() {
 
           <div className="mb-6">
             <GoogleDriveFolderInput
-              onFolderSelect={setGdriveFolderName}
+              onFolderChange={setGdriveFolderName}
               disabled={isResearching}
             />
           </div>

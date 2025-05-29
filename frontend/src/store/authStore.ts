@@ -22,7 +22,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null, // Initialize token as null
   checkAuthStatus: async () => {
     try {
-      const response = await fetch('/api/auth/status');
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!apiBaseUrl) {
+        throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined');
+      }
+      const response = await fetch(`${apiBaseUrl}/auth/status`);
       if (response.ok) {
         const { user, token } = await response.json(); // Assuming API returns user and token
         set({ isAuthenticated: true, user, token });
@@ -30,7 +34,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         // If 401, it means the backend invalidated the session (e.g., refresh token failed)
         set({ isAuthenticated: false, user: null, token: null });
         // Optionally, redirect to login page if not already there
-        if (window.location.pathname !== '/login') {
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
       } else {
@@ -44,7 +48,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: (user, token) => set({ isAuthenticated: true, user, token }), // Update login action
   logout: async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!apiBaseUrl) {
+        throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined');
+      }
+      await fetch(`${apiBaseUrl}/auth/logout`, { method: 'POST' });
     } catch (error) {
       console.error('Failed to logout on backend:', error);
     } finally {

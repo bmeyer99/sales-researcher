@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuthStore } from '../store/authStore';
 
 interface ResearchProgressProps {
   jobId: string | null;
@@ -25,7 +26,7 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
 
     const fetchStatus = async () => {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = useAuthStore.getState().token;
         if (!token) {
           setError('Authentication token not found.');
           return;
