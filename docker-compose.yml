@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app # For development, sync local changes
+      - /app/node_modules # Don't overwrite node_modules in container
+      - /app/.next # Persist .next folder if needed for dev
+    environment:
+      - NODE_ENV=development
+    # depends_on:
+    #   - backend # Enable if frontend needs backend during its build/startup
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app # For development, sync local changes
+    environment:
+      # Example environment variables - will be properly managed via .env files later
+      # - PYTHONUNBUFFERED=1
+      # - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/service_account.json
+      # - GEMINI_API_KEY=YOUR_GEMINI_API_KEY
+      - REDIS_URL=redis://redis:6379/0 # For Celery
+    depends_on:
+      - redis
+    # The command to run the FastAPI app will be in the backend Dockerfile.
+    # For Celery workers, we might override the command or have a separate service definition.
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379" # Expose Redis to host for debugging if needed
+    volumes:
+      - redis_data:/data # Optional: for Redis data persistence
+
+volumes:
+  redis_data:
+    driver: local
