@@ -1,9 +1,13 @@
-fastapi>=0.95.0,<0.111.0 # Pinning major versions is good practice
+fastapi==0.110.3 # Pinning major versions is good practice
 uvicorn[standard]>=0.20.0,<0.28.0
-# google-auth-oauthlib
-# google-api-python-client
-# google-generativeai
-# trafilatura
-# celery
-# redis
-# python-dotenv # For loading .env files if needed locally outside Docker
+google-auth-oauthlib>=0.8.0,<1.3.0
+google-auth>=2.29.0
+google-api-python-client>=2.50.0,<2.123.0
+google-generativeai
+trafilatura>=1.5.0,<1.9.0
+celery[redis]>=5.2.0,<5.4.0
+redis>=5.0.0,<6.0.0
+python-dotenv
+google-generativeai>=0.3.0,<0.6.0
+markdownify>=0.11.0,<0.12.0
+beautifulsoup4>=4.10.0,<4.13.0

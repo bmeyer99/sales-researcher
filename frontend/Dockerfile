@@ -15,7 +15,10 @@ RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Copy only build-essential files and directories
+COPY package.json package-lock.json* next.config.ts tsconfig.json postcss.config.mjs eslint.config.mjs ./
+COPY public ./public
+COPY src ./src
 
 ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build # Or: yarn build / pnpm build
@@ -31,10 +34,12 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/server.js ./server.js
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000
 ENV PORT 3000
-CMD ["node", "server.js"]
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD node /app/server.js || exit 1
+CMD ["node", "/app/server.js"]
