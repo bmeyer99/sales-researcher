@@ -12,7 +12,7 @@ services:
     env_file:
       - ./frontend/.env
     environment:
-      - NODE_ENV=development 
+      - NODE_ENV=production
     # ports: # As per your original, not exposing directly
     #   - "3000:3000"
     labels:
