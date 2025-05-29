@@ -35,6 +35,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 USER appuser
 
+# Set PATH for non-root user to include Python executables
+ENV PATH="/usr/local/bin:$PATH"
+
 # Copy installed Python packages from builder stage
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
@@ -44,4 +47,4 @@ COPY . .
 EXPOSE 8000
 
 # Default command for FastAPI application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
