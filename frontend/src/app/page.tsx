@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAuthStore } from '../store/authStore';
 import GoogleDriveFolderInput from '../components/GoogleDriveFolderInput';
+import ResearchProgress from '../components/ResearchProgress';
 
 export default function HomePage() {
   const { user, logout } = useAuthStore();

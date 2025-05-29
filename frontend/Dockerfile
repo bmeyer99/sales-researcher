@@ -20,8 +20,12 @@ COPY package.json package-lock.json* next.config.mjs tsconfig.json postcss.confi
 COPY public ./public
 COPY src ./src
 
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+ARG NEXT_PUBLIC_API_BASE_URL
+ENV NEXT_PUBLIC_API_BASE_URL ${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build # Or: yarn build / pnpm build
+RUN npm run build
 # Removed debug line
 
 # Stage 3: Production image (using Next.js standalone output)
