@@ -22,6 +22,7 @@ WORKDIR /app
 # Prevents Python from writing pyc files to disc and buffering stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH /app
 
 # Install only runtime system dependencies (if any, e.g., libpq for psycopg2)
 RUN apt-get update && apt-get install -y --no-install-recommends \
