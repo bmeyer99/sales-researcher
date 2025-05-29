@@ -2,11 +2,11 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from celery.result import AsyncResult
-from backend.celery_app import celery_app
+from celery_app import celery_app
 
-from backend.services.google_drive_service import find_or_create_folder
-from backend.tasks.orchestrator import research_orchestrator_task
-from backend.api.v1.auth import get_current_user
+from services.google_drive_service import find_or_create_folder
+from tasks.orchestrator import research_orchestrator_task
+from api.v1.auth import get_current_user
 
 router = APIRouter()
 

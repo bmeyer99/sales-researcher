@@ -1,10 +1,11 @@
-from celery.utils.log import get_task_logger
+import logging # Changed to standard logging
 from celery_app import celery_app
 from services.gemini_service import gemini_service
 from tasks.google_drive_tasks import save_text_to_gdrive_task
 import json
 import re
 
+logger = logging.getLogger(__name__) # Changed to standard logging
 
 @celery_app.task(bind=True, name="gemini_tasks.test_gemini_api")
 def test_gemini_api(self, prompt: str):
