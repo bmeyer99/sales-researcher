@@ -1,12 +1,8 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     volumes:
       - ./frontend:/app # For development, sync local changes
       - /app/node_modules # Don't overwrite node_modules in container
@@ -15,6 +11,20 @@ services:
       - ./frontend/.env
     environment:
       - NODE_ENV=development
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-research"
+      - "traefik.http.routers.research.entrypoints=http"
+      - "traefik.http.routers.research.rule=Host(`research.no13productions.com`)"
+      - "traefik.http.routers.research.middlewares=traefik-https-redirect"
+      - "traefik.http.routers.research-secure.entrypoints=https"
+      - "traefik.http.routers.research-secure.rule=Host(`research.no13productions.com`)"
+      - "traefik.http.routers.research-secure.middlewares=secure-headers,rate-limit,ssl-forwarder"
+      - "traefik.http.middlewares.ssl-forwarder.headers.customRequestHeaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.research-secure.tls=true"
+      - "traefik.http.routers.research-secure.tls.certresolver=cloudflare"
+      - "traefik.http.routers.research-secure.tls.options=default"
+      - "traefik.http.services.research-secure.loadbalancer.server.port=80"
     # depends_on:
     #   - backend # Enable if frontend needs backend during its build/startup
 
@@ -22,8 +32,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
     volumes:
       - ./backend:/app # For development, sync local changes
     env_file:
@@ -35,8 +43,6 @@ services:
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379" # Expose Redis to host for debugging if needed
     volumes:
       - redis_data:/data # Optional: for Redis data persistence
 
