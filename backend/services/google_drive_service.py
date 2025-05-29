@@ -4,6 +4,8 @@ from googleapiclient.errors import HttpError
 import logging
 from typing import Optional, Any
 from backend.db.user_store import get_user_credentials, User
+from googleapiclient.http import MediaInMemoryUpload
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -144,8 +146,6 @@ def find_or_create_folder(
     except Exception as e:
         logger.error(f"An unexpected error occurred in find_or_create_folder: {e}")
         raise
-from googleapiclient.http import MediaInMemoryUpload
-import io
 
 def upload_text_file(
     file_name: str,

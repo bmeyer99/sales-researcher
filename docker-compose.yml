@@ -4,13 +4,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     volumes:
-      # - ./frontend:/app # For development, sync local changes. Commented out to run production build from image.
+      - ./frontend:/app # For development, sync local changes.
       - /app/node_modules # Don't overwrite node_modules in container
       - /app/.next # Persist .next folder if needed for dev
     env_file:
       - ./frontend/.env
     environment:
       - NODE_ENV=development
+    # ports:  # PUBLIC FACING HOST - NO PORT PUBLISHING
+    #   - "3000:3000"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-research"
@@ -25,8 +27,13 @@ services:
       - "traefik.http.routers.research-secure.tls.certresolver=cloudflare"
       - "traefik.http.routers.research-secure.tls.options=default"
       - "traefik.http.services.research-secure.loadbalancer.server.port=3000"
-    # depends_on:
-    #   - backend # Enable if frontend needs backend during its build/startup
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - traefik-research
       - researcher
@@ -39,12 +46,19 @@ services:
       - ./backend:/app # For development, sync local changes
     env_file:
       - ./backend/.env
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    # ports:  # PUBLIC FACING HOST - NO PORT PUBLISHING
+    #   - "8000:8000"
     networks:
       - researcher
     depends_on:
       - redis
-    # The command to run the FastAPI app will be in the backend Dockerfile.
-    # For Celery workers, we might override the command or have a separate service definition.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   backend_worker:
     build:
@@ -55,8 +69,8 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_RESULTS_BACKEND_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
+      - CELERY_RESULTS_BACKEND_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
     networks:
       - researcher
     depends_on:
@@ -65,8 +79,8 @@ services:
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379" # Expose Redis port for local development/debugging
+    # ports:  # PUBLIC FACING HOST - NO PORT PUBLISHING
+      # - "6379:6379" 
     networks:
       - researcher
     volumes:

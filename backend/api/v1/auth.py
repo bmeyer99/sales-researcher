@@ -1,18 +1,16 @@
-from fastapi import APIRouter, Request, HTTPException, status, Depends
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi import APIRouter, Request, HTTPException, status
+from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests
 from backend.core.config import settings
 from backend.db.user_store import create_or_update_user, get_user, delete_user
-import os
 import secrets
 import urllib.parse
 import hashlib
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from datetime import datetime, timedelta
-from typing import MutableMapping
 
 router = APIRouter()
 
@@ -21,11 +19,12 @@ router = APIRouter()
 # server-side session store (e.g., Redis) for production.
 # For now, we'll assume session is available via request.session.
 
-@router.get("/google/login")
+@router.get(
+    "/google/login",
+    summary="Initiate Google OAuth2 Login",
+    description="Redirects the user to Google's consent screen to initiate the OAuth2 authentication flow. A PKCE code verifier and state are generated and stored in the session for security."
+)
 async def google_login(request: Request):
-    """
-    Initiates the Google OAuth2 flow by redirecting the user to Google's consent screen.
-    """
     session = request.session
 
     flow = Flow.from_client_config(
@@ -65,13 +64,12 @@ async def google_login(request: Request):
 
     return RedirectResponse(authorization_url)
 
-@router.get("/google/callback")
+@router.get(
+    "/google/callback",
+    summary="Google OAuth2 Callback",
+    description="Handles the redirect from Google after successful user authentication. Exchanges the authorization code for access and refresh tokens, verifies the ID token, retrieves user information, and stores user data in the database. Redirects to the frontend dashboard upon success."
+)
 async def google_callback(request: Request, code: str, state: str):
-    """
-    Handles the callback from Google after user authentication.
-    Exchanges the authorization code for tokens, retrieves user information,
-    and establishes a session or issues a token to the client.
-    """
     session = request.session
 
     # Verify state to prevent CSRF attacks
@@ -213,12 +211,12 @@ def refresh_google_token(user_id: str):
             detail=f"Failed to refresh token. Please re-authenticate. Error: {e}"
         )
 
-@router.get("/status")
+@router.get(
+    "/status",
+    summary="Check Authentication Status",
+    description="Checks the current authentication status of the user. If authenticated, it returns basic user information and ensures the access token is valid, refreshing it if necessary. Returns a 401 Unauthorized error if the user is not authenticated or the session is invalid."
+)
 async def auth_status(request: Request):
-    """
-    Checks the authentication status of the user and ensures access token is valid.
-    Returns user information if authenticated, otherwise returns 401.
-    """
     session = request.session
     user_id = session.get("user_id")
     if not user_id:
@@ -255,11 +253,12 @@ async def auth_status(request: Request):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An unexpected error occurred: {e}")
 
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    summary="Logout User",
+    description="Logs out the current user by clearing their session and removing their authentication data from the database. This invalidates their access and refresh tokens."
+)
 async def logout(request: Request):
-    """
-    Logs out the user by clearing the session and deleting user data from DB.
-    """
     session = request.session
     user_id = session.get("user_id")
     if user_id:
@@ -267,12 +266,6 @@ async def logout(request: Request):
     session.clear()
     return {"message": "Logged out successfully"}
 
-from fastapi import APIRouter, Request, HTTPException, status, Depends
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request as GoogleAuthRequest
-from datetime import datetime, timedelta
-# No change needed here, the import is already correct.
-from backend.core.config import settings
 
 async def get_current_user(request: Request):
     """

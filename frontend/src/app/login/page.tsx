@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAuthStore } from "../../store/authStore";
+import { useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthStore } from '../../store/authStore';
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated } = useAuthStore();
-  const errorMessage = searchParams.get("error");
+  const errorMessage = searchParams.get('error');
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      router.push('/');
     }
   }, [isAuthenticated, router]);
 
@@ -21,15 +21,17 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="p-8 bg-white rounded shadow-md text-center">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <div className="rounded bg-white p-8 text-center shadow-md">
+        <h1 className="mb-4 text-2xl font-bold">Login</h1>
         {errorMessage && (
-          <p className="text-red-500 mb-4">Authentication failed: {errorMessage}</p>
+          <p className="mb-4 text-red-500">
+            Authentication failed: {errorMessage}
+          </p>
         )}
         <button
           onClick={handleLogin}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+          className="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
         >
           Sign in with Google
         </button>

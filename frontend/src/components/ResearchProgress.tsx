@@ -31,15 +31,20 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
           return;
         }
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/research/status/${jobId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/research/status/${jobId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+          throw new Error(
+            errorData.detail || `HTTP error! status: ${response.status}`,
+          );
         }
 
         const data: ResearchStatus = await response.json();
@@ -80,24 +85,35 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
   }
 
   return (
-    <div className="p-4 border rounded-md shadow-sm bg-white">
-      <h2 className="text-lg font-semibold mb-2">Research Progress</h2>
-      <p><strong>Status:</strong> {progress.status}</p>
-      <p><strong>Message:</strong> {progress.message}</p>
-      {progress.phase && <p><strong>Phase:</strong> {progress.phase}</p>}
+    <div className="rounded-md border bg-white p-4 shadow-sm">
+      <h2 className="mb-2 text-lg font-semibold">Research Progress</h2>
+      <p>
+        <strong>Status:</strong> {progress.status}
+      </p>
+      <p>
+        <strong>Message:</strong> {progress.message}
+      </p>
+      {progress.phase && (
+        <p>
+          <strong>Phase:</strong> {progress.phase}
+        </p>
+      )}
 
       {progress.status === 'PROGRESS' && (
         <div className="mt-2">
-          <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '100%' }}></div>
+          <div className="h-2.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+            <div
+              className="h-2.5 rounded-full bg-blue-600"
+              style={{ width: '100%' }}
+            ></div>
           </div>
-          <p className="text-sm text-gray-500 mt-1">Processing...</p>
+          <p className="mt-1 text-sm text-gray-500">Processing...</p>
         </div>
       )}
 
       {progress.status === 'SUCCESS' && progress.result_link && (
         <div className="mt-4">
-          <p className="text-green-600 font-medium">All tasks complete!</p>
+          <p className="font-medium text-green-600">All tasks complete!</p>
           <p>
             <strong>Google Drive Link:</strong>{' '}
             <a
@@ -114,7 +130,10 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
 
       {progress.status === 'FAILURE' && (
         <div className="mt-4 text-red-500">
-          <p><strong>Research Failed:</strong> {progress.error || 'An unknown error occurred.'}</p>
+          <p>
+            <strong>Research Failed:</strong>{' '}
+            {progress.error || 'An unknown error occurred.'}
+          </p>
         </div>
       )}
     </div>

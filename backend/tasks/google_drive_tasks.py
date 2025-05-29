@@ -1,9 +1,9 @@
 from backend.celery_app import celery_app # Import celery_app
 from backend.services.google_drive_service import upload_text_file
 import logging
+from googleapiclient.errors import HttpError
 
 logger = logging.getLogger(__name__)
-from googleapiclient.errors import HttpError
 
 @celery_app.task(bind=True, max_retries=3, default_retry_delay=300) # Use celery_app.task
 def save_text_to_gdrive_task(self, file_content: str, company_name: str, drive_folder_id: str, user_id: str):

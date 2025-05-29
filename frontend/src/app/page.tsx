@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
-import ProtectedRoute from "../components/ProtectedRoute";
-import { useAuthStore } from "../store/authStore";
-import GoogleDriveFolderInput from "../components/GoogleDriveFolderInput";
+import ProtectedRoute from '../components/ProtectedRoute';
+import { useAuthStore } from '../store/authStore';
+import GoogleDriveFolderInput from '../components/GoogleDriveFolderInput';
 
 export default function HomePage() {
   const { user, logout } = useAuthStore();
-  const [googleDriveFolderName, setGoogleDriveFolderName] = useState<string>('');
+  const [googleDriveFolderName, setGoogleDriveFolderName] =
+    useState<string>('');
 
   const handleFolderNameChange = (name: string) => {
     setGoogleDriveFolderName(name);
@@ -30,7 +31,7 @@ export default function HomePage() {
           {user && (
             <div className="mt-4 text-white">
               <p>Welcome, {user.name || user.email}!</p>
-              <div className="mt-8 w-full max-w-md mx-auto">
+              <div className="mx-auto mt-8 w-full max-w-md">
                 <GoogleDriveFolderInput
                   folderName={googleDriveFolderName}
                   onFolderNameChange={handleFolderNameChange}
@@ -38,7 +39,7 @@ export default function HomePage() {
               </div>
               <button
                 onClick={logout}
-                className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                className="mt-2 rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
               >
                 Logout
               </button>

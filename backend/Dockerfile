@@ -28,18 +28,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user for security
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-USER appuser
+# Copy installed Python packages and executables from builder stage
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Set PATH for non-root user to include Python executables
+# Set PATH to include Python executables (applies to subsequent USER)
 ENV PATH="/usr/local/bin:$PATH"
 
-# Copy installed Python packages from builder stage
-COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
-
+# Create a non-root user for security
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+ARG BUILD_DATE
 # Copy the rest of the application code
 COPY . .
+
+# Change ownership of the app directory to appuser
+RUN chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 8000
 

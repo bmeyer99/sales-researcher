@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "../store/authStore";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '../store/authStore';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,11 +14,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      if (typeof window !== "undefined") {
+      if (typeof window !== 'undefined') {
         // Only run on client side
         await checkAuthStatus();
         if (!isAuthenticated) {
-          router.push("/login");
+          router.push('/login');
         }
       }
     };

@@ -4,8 +4,6 @@ from pydantic import BaseModel
 from celery.result import AsyncResult
 from backend.celery_app import celery_app
 
-from backend.core.config import settings
-from backend.db.user_store import get_user_credentials as get_user
 from backend.services.google_drive_service import find_or_create_folder
 from backend.tasks.orchestrator import research_orchestrator_task
 from backend.api.v1.auth import get_current_user
@@ -28,10 +26,15 @@ class ResearchStatusResponse(BaseModel):
     result_link: Optional[str] = None
     error: Optional[str] = None
 
-@router.post("/start", response_model=ResearchStartResponse)
+@router.post(
+    "/start",
+    response_model=ResearchStartResponse,
+    summary="Start Sales Prospect Research",
+    description="Initiates a new sales prospect research task. The task runs asynchronously and its progress can be tracked using the returned job ID. A Google Drive folder will be created or located for storing research results."
+)
 async def start_research(
     request: ResearchStartRequest,
-    current_user: dict = Depends(get_current_user) # This will be implemented in auth.py
+    current_user: dict = Depends(get_current_user)
 ):
     user_id = current_user["user_id"]
     company_name = request.company_name
@@ -43,12 +46,16 @@ async def start_research(
             detail="Company name and Google Drive folder name are required."
         )
     
-    @router.get("/status/{job_id}", response_model=ResearchStatusResponse)
+    @router.get(
+        "/status/{job_id}",
+        response_model=ResearchStatusResponse,
+        summary="Get Research Task Status",
+        description="Retrieves the current status and progress of an ongoing or completed sales prospect research task using its job ID. Provides details on the current phase, progress messages, and a link to results if completed."
+    )
     async def get_research_status(
         job_id: str,
         current_user: dict = Depends(get_current_user)
     ):
-        user_id = current_user["user_id"]
     
         # TODO: Implement authorization check: Verify that job_id belongs to user_id
         # This requires storing job_id to user_id mapping when the task is initiated.
