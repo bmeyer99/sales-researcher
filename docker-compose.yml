@@ -46,7 +46,7 @@ services:
     environment:
       - REDIS_PASSWORD=debugpassword # Matching the redis service for debugging
       - FRONTEND_URL=http://frontend:3000 # Adjusted to match the frontend service
-      - GOOGLE_PROJECT_ID=YOUR_GOOGLE_PROJECT_ID_HERE # Please replace with your actual Google Project ID
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID} # Please replace with your actual Google Project ID
     networks:
       - researcher
     depends_on:
@@ -64,7 +64,7 @@ services:
       - REDIS_URL=redis://:debugpassword@redis:6379/0 # Hardcoded for debugging
       - CELERY_RESULTS_BACKEND_URL=redis://:debugpassword@redis:6379/0 # Hardcoded for debugging
       - FRONTEND_URL=https://research.no13productions.com
-      - GOOGLE_PROJECT_ID=YOUR_GOOGLE_PROJECT_ID_HERE # Please replace with your actual Google Project ID
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID} # Please replace with your actual Google Project ID
     networks:
       - researcher
     depends_on:
