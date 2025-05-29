@@ -22,6 +22,7 @@ COPY src ./src
 
 ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build # Or: yarn build / pnpm build
+RUN ls -la /app/.next/standalone # Debug: List contents of standalone directory
 
 # Stage 3: Production image (using Next.js standalone output)
 FROM node:18-alpine AS runner

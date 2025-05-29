@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.cors import CORSMiddleware  # Added for CORS
-from backend.api.v1.auth import router as auth_router
-from backend.api.v1.research import router as research_router
-from backend.core.config import settings
+from api.v1.auth import router as auth_router
+from api.v1.research import router as research_router
+from core.config import settings
 
 app = FastAPI(
     title="Sales Prospect Research Tool API",

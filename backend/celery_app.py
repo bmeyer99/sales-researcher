@@ -9,10 +9,12 @@ celery_app = Celery(
     broker=REDIS_URL,
     backend=CELERY_RESULTS_BACKEND_URL,
     include=[
-        "backend.tasks.health_check_task",  # Keep existing tasks
-        "backend.tasks.gemini_tasks",  # Add the new Gemini tasks module
-        "backend.tasks.gemini_research",  # Keep existing tasks
-        "backend.tasks.content_extraction",  # Keep existing tasks
+        "tasks.health_check_task",
+        "tasks.gemini_tasks",
+        # "tasks.gemini_research", # This seems to be consolidated into gemini_tasks or is older
+        "tasks.content_extraction",
+        "tasks.google_drive_tasks", # Assuming this exists or will be created
+        "tasks.orchestrator", # For the main workflow
     ],
 )
 

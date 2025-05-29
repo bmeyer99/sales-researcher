@@ -1,7 +1,7 @@
 from celery.utils.log import get_task_logger
-from backend.celery_app import celery_app
-from backend.services.gemini_service import gemini_service
-from backend.tasks.google_drive_tasks import save_text_to_gdrive_task
+from celery_app import celery_app
+from services.gemini_service import gemini_service
+from tasks.google_drive_tasks import save_text_to_gdrive_task
 import json
 import re
 

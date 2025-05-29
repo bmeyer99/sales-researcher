@@ -1,5 +1,5 @@
-from backend.celery_app import celery_app  # Import celery_app
-from backend.services.google_drive_service import upload_text_file
+from celery_app import celery_app  # Import celery_app
+from services.google_drive_service import upload_text_file
 import logging
 from googleapiclient.errors import HttpError
 

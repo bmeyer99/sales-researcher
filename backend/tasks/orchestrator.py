@@ -1,13 +1,13 @@
 from celery.utils.log import get_task_logger
 
-from backend.celery_app import celery_app
-from backend.tasks.gemini_tasks import (
+from celery_app import celery_app
+from tasks.gemini_tasks import (
     prospect_deep_dive_task,
     prospect_competitor_analysis_task,
     own_competitor_marketing_analysis_task,
 )
-from backend.tasks.content_extraction import extract_url_content_task
-from backend.tasks.google_drive_tasks import save_extracted_content_to_gdrive_task
+from tasks.content_extraction import extract_url_content_task
+from tasks.google_drive_tasks import save_extracted_content_to_gdrive_task
 
 logger = get_task_logger(__name__)
 

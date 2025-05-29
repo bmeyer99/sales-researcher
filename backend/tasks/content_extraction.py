@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from typing import Optional
 
 from celery.utils.log import get_task_logger
-from backend.celery_app import celery_app
-from backend.services.content_extraction_service import fetch_and_extract_text
+from celery_app import celery_app
+from services.content_extraction_service import fetch_and_extract_text
 from markdownify import markdownify as md
 
 logger = get_task_logger(__name__)
@@ -24,7 +24,7 @@ def extract_url_content_task(
     drive_folder_id: Optional[str] = None,
     user_id: Optional[str] = None,
 ):
-    from backend.tasks.google_drive_tasks import save_extracted_content_to_gdrive_task
+    from tasks.google_drive_tasks import save_extracted_content_to_gdrive_task
 
     results = []
     total_urls = len(source_urls)

@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging
 from typing import Optional, Any
-from backend.db.user_store import get_user_credentials
+from db.user_store import get_user_credentials
 from googleapiclient.http import MediaInMemoryUpload
 import io
 

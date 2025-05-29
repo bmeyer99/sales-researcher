@@ -4,8 +4,8 @@ from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import logging
-from backend.core.config import settings
-from backend.db.user_store import create_or_update_user, get_user, delete_user
+from core.config import settings
+from db.user_store import create_or_update_user, get_user, delete_user
 import secrets
 import urllib.parse
 import hashlib
