@@ -55,6 +55,8 @@ dist/
 out/
 coverage/
 *.env
+backend/.env
+frontend/.env
 .DS_Store
 *.pem
 
