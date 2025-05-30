@@ -7,14 +7,8 @@ services:
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
         NEXT_PUBLIC_ASSET_PREFIX: ${NEXT_PUBLIC_ASSET_PREFIX}
-    volumes:
-      - /app/.next # Persists the .next build cache, can speed up server restarts.
-    env_file:
-      - ./frontend/.env
     environment:
       - NODE_ENV=production
-    # ports: # As per your original, not exposing directly
-    #   - "3000:3000"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik-research"
@@ -35,19 +29,16 @@ services:
       - traefik-research
       - researcher
 
-  # ... your other services (backend, backend_worker, redis) remain the same
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    volumes:
-      - ./backend:/app # For development, sync local changes
     env_file:
       - ./backend/.env
     environment:
-      - REDIS_PASSWORD=debugpassword # Matching the redis service for debugging
-      - FRONTEND_URL=http://frontend:3000 # Adjusted to match the frontend service
-      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID} # Please replace with your actual Google Project ID
+      - REDIS_PASSWORD=jawjfeoifpqweoaaskdjf32twsadg
+      - FRONTEND_URL=http://frontend:3000 
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID} 
     networks:
       - researcher
     depends_on:
@@ -57,15 +48,13 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    volumes:
-      - ./backend:/app
     env_file:
       - ./backend/.env
     environment:
-      - REDIS_URL=redis://:debugpassword@redis:6379/0 # Hardcoded for debugging
-      - CELERY_RESULTS_BACKEND_URL=redis://:debugpassword@redis:6379/0 # Hardcoded for debugging
-      - FRONTEND_URL=https://research.no13productions.com
-      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID} # Please replace with your actual Google Project ID
+      - REDIS_URL=redis://:jawjfeoifpqweoaaskdjf32twsadg@redis:6379/0
+      - CELERY_RESULTS_BACKEND_URL=redis://:jawjfeoifpqweoaaskdjf32twsadg@redis:6379/0
+      - FRONTEND_URL=http://frontend:3000
+      - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
     networks:
       - researcher
     depends_on:
@@ -77,12 +66,12 @@ services:
     networks:
       - researcher
     volumes:
-      - redis_data:/data # Optional: for Redis data persistence
+      - redis_data:/data
     environment:
-      - REDIS_PASSWORD=debugpassword # Use an environment variable for password
-    command: redis-server --requirepass debugpassword # Set password
+      - REDIS_PASSWORD=jawjfeoifpqweoaaskdjf32twsadg
+    command: redis-server --requirepass jawjfeoifpqweoaaskdjf32twsadg
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "debugpassword", "--raw", "incr", "ping"] # Basic health check
+      test: ["CMD", "redis-cli", "-a", "jawjfeoifpqweoaaskdjf32twsadg", "--raw", "incr", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5

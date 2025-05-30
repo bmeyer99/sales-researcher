@@ -6,6 +6,7 @@ import GoogleDriveFolderInput from '@/components/GoogleDriveFolderInput';
 import ResearchProgress from '@/components/ResearchProgress';
 import { useAuthStore } from '@/store/authStore';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/config';
 
 export default function DashboardPage() {
   const [companyName, setCompanyName] = useState('');
@@ -14,20 +15,28 @@ export default function DashboardPage() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const router = useRouter();
+  const token = useAuthStore(state => state.token); // Get token reactively
 
   const handleStartResearch = async () => {
     if (!companyName || !gdriveFolderName) {
       setError('Please fill in all fields.');
       return;
     }
+    if (!token) {
+      setError('Authentication token not found. Please log in again.');
+      setIsResearching(false);
+      return;
+    }
 
     setIsResearching(true);
     setError('');
 
-    const { token } = useAuthStore.getState();
     try {
+      if (!API_BASE_URL) {
+        throw new Error('API_BASE_URL is not configured.');
+      }
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/research/start`,
+        `${API_BASE_URL}/research/start`,
         {
           method: 'POST',
           headers: {
@@ -97,6 +106,7 @@ export default function DashboardPage() {
 
           <div className="mb-6">
             <GoogleDriveFolderInput
+              folderName={gdriveFolderName}
               onFolderChange={setGdriveFolderName}
               disabled={isResearching}
             />

@@ -1,29 +1,30 @@
 'use client';
 
-// import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
+// Removed useEffect and useAuthStore import as checkAuthStatus is now handled in AuthRedirectHandler
+import AuthRedirectHandler from '@/components/AuthRedirectHandler'; // Adjusted path assuming @ is src
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const checkAuthStatus = useAuthStore((state) => state.checkAuthStatus);
+  // const checkAuthStatus = useAuthStore((state) => state.checkAuthStatus); // Moved to AuthRedirectHandler
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
+  // useEffect(() => { // Moved to AuthRedirectHandler
+  //   checkAuthStatus();
+  // }, [checkAuthStatus]);
 
   return (
     <html lang="en">
       <body className={`antialiased`}>
         <GoogleOAuthProvider
-          clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}
+          clientId={require('@/config').GOOGLE_CLIENT_ID || ''}
         >
-          {children}
+          <AuthRedirectHandler>
+            {children}
+          </AuthRedirectHandler>
         </GoogleOAuthProvider>
       </body>
     </html>

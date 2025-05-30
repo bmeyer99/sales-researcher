@@ -15,8 +15,11 @@ RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
 FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-# Copy only build-essential files and directories
+
+# Copy package.json and essential config files first
 COPY package.json package-lock.json* next.config.mjs tsconfig.json postcss.config.mjs eslint.config.mjs ./
+
+# Then copy the rest of the application code
 COPY public ./public
 COPY src ./src
 
@@ -36,6 +39,7 @@ WORKDIR /app
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
+ENV HOSTNAME 0.0.0.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

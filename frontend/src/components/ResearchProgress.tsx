@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react'; // Import memo
 import { useAuthStore } from '../store/authStore';
+import { API_BASE_URL } from '@/config';
 
 interface ResearchProgressProps {
   jobId: string | null;
@@ -13,9 +14,10 @@ interface ResearchStatus {
   error?: string;
 }
 
-const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
+const ResearchProgress: React.FC<ResearchProgressProps> = memo(({ jobId }) => {
   const [progress, setProgress] = useState<ResearchStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const token = useAuthStore(state => state.token); // Reactive token
 
   useEffect(() => {
     if (!jobId) {
@@ -24,16 +26,22 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
       return;
     }
 
-    const fetchStatus = async () => {
-      try {
-        const token = useAuthStore.getState().token;
-        if (!token) {
-          setError('Authentication token not found.');
-          return;
-        }
+    let intervalId: NodeJS.Timeout | undefined = undefined;
 
+    const fetchStatus = async () => {
+      if (!token) { // Check reactive token
+        setError('Authentication token not found. Polling paused.');
+        if (intervalId) clearInterval(intervalId); // Stop polling if token disappears
+        return;
+      }
+      setError(null); // Clear previous "token not found" error if token is now available
+
+      try {
+        if (!API_BASE_URL) {
+          throw new Error('API_BASE_URL is not configured.');
+        }
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/research/status/${jobId}`,
+          `${API_BASE_URL}/research/status/${jobId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -42,36 +50,42 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.detail || `HTTP error! status: ${response.status}`,
-          );
+          let errorDetail = `HTTP error! status: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorDetail = errorData.detail || errorDetail;
+          } catch (e) { /* Ignore if response is not JSON */ }
+          throw new Error(errorDetail);
         }
 
         const data: ResearchStatus = await response.json();
         setProgress(data);
 
         if (data.status === 'SUCCESS' || data.status === 'FAILURE') {
-          clearInterval(intervalId); // Stop polling
+          if (intervalId) clearInterval(intervalId);
         }
       } catch (err: any) {
         setError(err.message);
         setProgress(null);
-        clearInterval(intervalId); // Stop polling on error
+        if (intervalId) clearInterval(intervalId);
       }
     };
 
     // Initial fetch
     fetchStatus();
 
-    // Set up polling
-    const intervalId = setInterval(fetchStatus, 3000); // Poll every 3 seconds
-
-    // Cleanup on component unmount or jobId change
+    // Set up polling only if token exists
+    if (token) {
+      intervalId = setInterval(fetchStatus, 3000); // Poll every 3 seconds
+    } else {
+      setError('Authentication token not found. Polling not started.');
+    }
+    
+    // Cleanup on component unmount or jobId/token change
     return () => {
-      clearInterval(intervalId);
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [jobId]);
+  }, [jobId, token]); // Add token to dependency array
 
   if (!jobId) {
     return null; // Don't render if no jobId is provided
@@ -139,6 +153,8 @@ const ResearchProgress: React.FC<ResearchProgressProps> = ({ jobId }) => {
       )}
     </div>
   );
-};
+});
+
+ResearchProgress.displayName = 'ResearchProgress'; // Optional: for better debugging
 
 export default ResearchProgress;

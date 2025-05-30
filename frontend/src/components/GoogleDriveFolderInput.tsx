@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react'; // Import memo
 
 interface GoogleDriveFolderInputProps {
   folderName?: string;
@@ -6,7 +6,7 @@ interface GoogleDriveFolderInputProps {
   disabled?: boolean;
 }
 
-const GoogleDriveFolderInput: React.FC<GoogleDriveFolderInputProps> = ({
+const GoogleDriveFolderInput: React.FC<GoogleDriveFolderInputProps> = memo(({
   folderName,
   onFolderChange,
   disabled,
@@ -36,6 +36,8 @@ const GoogleDriveFolderInput: React.FC<GoogleDriveFolderInputProps> = ({
       />
     </div>
   );
-};
+});
+
+GoogleDriveFolderInput.displayName = 'GoogleDriveFolderInput'; // Optional: for better debugging
 
 export default GoogleDriveFolderInput;

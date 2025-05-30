@@ -10,45 +10,58 @@ interface User {
 interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
-  token: string | null; // Add token to the state
+  token: string | null;
+  isLoadingAuth: boolean;
+  authError: string | null;
   checkAuthStatus: () => Promise<void>;
-  login: (user: User, token: string) => void; // Modify login to accept token
+  login: (user: User, token: string) => void;
   logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   user: null,
-  token: null, // Initialize token as null
+  token: null,
+  isLoadingAuth: false,
+  authError: null,
   checkAuthStatus: async () => {
+    set({ isLoadingAuth: true, authError: null });
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/status`);
+      const { API_BASE_URL } = await import('@/config'); // Dynamically import for client-side usage
+      if (!API_BASE_URL) throw new Error("API_BASE_URL is not configured");
+      const response = await fetch(`${API_BASE_URL}/auth/status`);
       if (response.ok) {
-        const { user, token } = await response.json(); // Assuming API returns user and token
-        set({ isAuthenticated: true, user, token });
-      } else if (response.status === 401) {
-        // If 401, it means the backend invalidated the session (e.g., refresh token failed)
-        set({ isAuthenticated: false, user: null, token: null });
-        // Optionally, redirect to login page if not already there
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
+        const { user, token } = await response.json();
+        set({ isAuthenticated: true, user, token, isLoadingAuth: false });
       } else {
-        set({ isAuthenticated: false, user: null, token: null });
+        // Any non-ok response means not authenticated
+        // Removed direct window.location.href, redirection will be handled by a component
+        set({ isAuthenticated: false, user: null, token: null, isLoadingAuth: false });
       }
     } catch (error) {
       console.error('Failed to check auth status:', error);
-      set({ isAuthenticated: false, user: null, token: null });
+      set({
+        isAuthenticated: false,
+        user: null,
+        token: null,
+        isLoadingAuth: false,
+        authError: 'Failed to check auth status.',
+      });
     }
   },
-  login: (user, token) => set({ isAuthenticated: true, user, token }), // Update login action
+  login: (user, token) => set({ isAuthenticated: true, user, token, isLoadingAuth: false, authError: null }),
   logout: async () => {
+    set({ isLoadingAuth: true, authError: null });
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/logout`, { method: 'POST' });
+      const { API_BASE_URL } = await import('@/config'); // Dynamically import for client-side usage
+      if (!API_BASE_URL) throw new Error("API_BASE_URL is not configured");
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST' });
     } catch (error) {
       console.error('Failed to logout on backend:', error);
+      // Set error state, but still proceed to clear local auth state in finally
+      set(state => ({ ...state, authError: 'Failed to logout on backend.' }));
     } finally {
-      set({ isAuthenticated: false, user: null, token: null });
+      set({ isAuthenticated: false, user: null, token: null, isLoadingAuth: false });
     }
   },
 }));

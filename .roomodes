@@ -6,12 +6,6 @@ customModes:
       application deployment.
     whenToUse: Use this mode when you need to develop the fronend code or perform
       anything on the frontend.
-    customInstructions: Perform a comprehensive audit of our entire Next.js frontend
-      codebase. Your objective is to identify existing errors, potential bugs,
-      security vulnerabilities, performance bottlenecks, and deviations from
-      best practices. The final output should be a clear, actionable report that
-      our development team can use to improve the stability, performance, and
-      maintainability of the application.
     groups:
       - read
       - edit
